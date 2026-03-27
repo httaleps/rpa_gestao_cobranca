@@ -3,15 +3,18 @@ import qrcode
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
-from PIL import Image
 import os
 
-# Garante que a pasta existe
 os.makedirs('../boletos', exist_ok=True)
 
-# ── 1. LER FATURAS DO BANCO ──────────────────────────────────────────────────
-conn = sqlite3.connect('../parte1_cadastro/techsolutions.db')
+# ── LER FATURAS DO BANCO ─────────────────────────────────────────────────────
+conn = sqlite3.connect('../parte1_cadastro/instance/techsolutions.db')
 cursor = conn.cursor()
+
+cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+tabelas = cursor.fetchall()
+print("Tabelas no banco:", tabelas)
+
 cursor.execute('''
     SELECT f.id, c.nome, c.email, f.valor, f.data_vencimento
     FROM fatura f
@@ -20,9 +23,11 @@ cursor.execute('''
 faturas = cursor.fetchall()
 conn.close()
 
-# ── 2. GERAR UM PDF POR FATURA ───────────────────────────────────────────────
+print(f"Faturas encontradas: {len(faturas)}")
+
+# ── GERAR UM PDF POR FATURA ──────────────────────────────────────────────────
 def gerar_boleto(fatura_id, nome, email, valor, vencimento):
-    # Cria o QR Code com as informações do pagamento
+    # Gera o QR Code
     dados_pix = f"PIX|TechSolutions|R${valor:.2f}|Fatura#{fatura_id}|Venc:{vencimento}"
     img_qr = qrcode.make(dados_pix)
     qr_path = f'../boletos/qr_{fatura_id}.png'
@@ -33,7 +38,7 @@ def gerar_boleto(fatura_id, nome, email, valor, vencimento):
     c = canvas.Canvas(arquivo, pagesize=A4)
     largura, altura = A4
 
-    # Cabeçalho
+    # Cabeçalho azul
     c.setFillColorRGB(0, 0.4, 0.8)
     c.rect(0, altura - 80, largura, 80, fill=True, stroke=False)
     c.setFillColorRGB(1, 1, 1)
@@ -50,7 +55,7 @@ def gerar_boleto(fatura_id, nome, email, valor, vencimento):
     c.drawString(2*cm, altura - 145, f"E-mail: {email}")
     c.drawString(2*cm, altura - 165, f"Nº da Fatura: {fatura_id:03d}")
 
-    # Valor e vencimento em destaque
+    # Valor e vencimento
     c.setFillColorRGB(0.9, 0.9, 0.9)
     c.rect(1.5*cm, altura - 230, largura - 3*cm, 50, fill=True, stroke=False)
     c.setFillColorRGB(0, 0, 0)
@@ -58,10 +63,9 @@ def gerar_boleto(fatura_id, nome, email, valor, vencimento):
     c.drawString(2*cm, altura - 200, f"Valor: R$ {valor:.2f}")
     c.drawString(10*cm, altura - 200, f"Vencimento: {vencimento}")
 
-    # Código de barras simulado (linha decorativa)
-    c.setFillColorRGB(0, 0, 0)
+    # Código de barras simulado
     c.setFont("Helvetica", 8)
-    codigo = f"0001.{fatura_id:04d} 0002.{int(valor*100):06d} 0003.{vencimento.replace('-','')}"
+    codigo = f"0001.{fatura_id:04d} 0002.{int(valor*100):06d} 0003.{str(vencimento).replace('-','')}"
     c.drawString(2*cm, altura - 280, f"Código: {codigo}")
 
     # QR Code
@@ -77,7 +81,7 @@ def gerar_boleto(fatura_id, nome, email, valor, vencimento):
     c.save()
     print(f"✅ PDF gerado: {arquivo}")
 
-# ── 3. RODAR PARA TODAS AS FATURAS ──────────────────────────────────────────
+# ── RODAR PARA TODAS AS FATURAS ──────────────────────────────────────────────
 for fatura in faturas:
     gerar_boleto(*fatura)
 
