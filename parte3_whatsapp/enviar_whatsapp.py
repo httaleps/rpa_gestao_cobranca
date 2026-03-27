@@ -5,7 +5,10 @@ import time
 import csv
 from datetime import datetime
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 # ── 1. LER PLANILHA ──────────────────────────────────────────────────────────
 df = pd.read_excel('../dados/clientes_whatsapp.xlsx')
@@ -25,11 +28,10 @@ time.sleep(30)
 
 # ── 3. ENVIAR MENSAGEM PARA CADA CLIENTE ─────────────────────────────────────
 for index, row in df.iterrows():
-    nome       = row['nome']
-    telefone   = validar_telefone(row['telefone'])
-    valor      = row.get('valor', 0)
-    vencimento = row.get('vencimento', 'N/A')
-    fatura_num = index + 1
+    nome       = row['Nome']
+    telefone   = validar_telefone(row['Telefone'])
+    valor      = row.get('Valor', 0)
+    vencimento = row.get('Vencimento', 'N/A')
 
     if not telefone:
         print(f"❌ Telefone inválido: {nome}")
@@ -50,17 +52,17 @@ for index, row in df.iterrows():
         url = f"https://web.whatsapp.com/send?phone=55{telefone}&text={msg_codificada}"
 
         driver.get(url)
-        time.sleep(6)
+        time.sleep(8)  # Aguarda carregar a conversa
 
-        # Clica no botão enviar
-        botao = pyautogui.locateOnScreen('btn_enviar.png', confidence=0.7)
-        if botao:
-            pyautogui.click(botao)
-            print(f"✅ Mensagem enviada para {nome}")
-            df.at[index, 'Status'] = 'Enviado'
-        else:
-            raise Exception("Botão enviar não encontrado na tela")
+        # Encontra a caixa de texto e aperta ENTER para enviar
+        wait = WebDriverWait(driver, 15)
+        caixa = wait.until(EC.presence_of_element_located(
+            (By.XPATH, '//div[@contenteditable="true"][@data-tab="10"]')
+        ))
+        caixa.send_keys(Keys.ENTER)
 
+        print(f"✅ Mensagem enviada para {nome}")
+        df.at[index, 'Status'] = 'Enviado'
         time.sleep(3)
 
     except Exception as e:
