@@ -25,10 +25,46 @@ conn.close()
 
 print(f"Faturas encontradas: {len(faturas)}")
 
+# ── GERAR  QR CODE ──────────────────────────────────────────────────
+def gerar_payload_pix(valor, fatura_id):
+    chave_pix = "48991183497"  # substitua pela chave PIX real
+    nome_beneficiario = "Tales Henrique Silveira de Sousa"
+    cidade = "Palhoça"
+    txid = f"FATURA{fatura_id:03d}"
+
+    def campo(id, valor):
+        return f"{id}{len(valor):02d}{valor}"
+
+    merchant_account = campo("00", "BR.GOV.BCB.PIX") + campo("01", chave_pix)
+    payload = (
+        campo("00", "01") +
+        campo("26", merchant_account) +
+        campo("52", "0000") +
+        campo("53", "986") +
+        campo("54", f"{valor:.2f}") +
+        campo("58", "BR") +
+        campo("59", nome_beneficiario[:25]) +
+        campo("60", cidade[:15]) +
+        campo("62", campo("05", txid[:25]))
+    )
+
+    # CRC16 obrigatório no padrão PIX
+    def crc16(data):
+        crc = 0xFFFF
+        for byte in data.encode('utf-8'):
+            crc ^= byte << 8
+            for _ in range(8):
+                crc = (crc << 1) ^ 0x1021 if crc & 0x8000 else crc << 1
+        return crc & 0xFFFF
+
+    payload += "6304"
+    payload += f"{crc16(payload):04X}"
+    return payload
+
 # ── GERAR UM PDF POR FATURA ──────────────────────────────────────────────────
 def gerar_boleto(fatura_id, nome, email, valor, vencimento):
     # Gera o QR Code
-    dados_pix = f"PIX|TechSolutions|R${valor:.2f}|Fatura#{fatura_id}|Venc:{vencimento}"
+    dados_pix = gerar_payload_pix(valor, fatura_id)
     img_qr = qrcode.make(dados_pix)
     qr_path = f'../boletos/qr_{fatura_id}.png'
     img_qr.save(qr_path)

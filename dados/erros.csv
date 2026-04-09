@@ -1,0 +1,23 @@
+cliente,erro,data
+José Lima,"Message: 
+Stacktrace:
+	chromedriver!GetHandleVerifier [0x7ff63fc429c5+2ed785]
+	chromedriver!GetHandleVerifier [0x7ff63f96a0d0+14e90]
+	chromedriver!(No symbol) [0x7ff63f6cdb2d]
+	chromedriver!(No symbol) [0x7ff63f726b9e]
+	chromedriver!(No symbol) [0x7ff63f726eac]
+	chromedriver!(No symbol) [0x7ff63f776fe7]
+	chromedriver!(No symbol) [0x7ff63f773b9b]
+	chromedriver!(No symbol) [0x7ff63f719298]
+	chromedriver!(No symbol) [0x7ff63f71a183]
+	chromedriver!GetHandleVerifier [0x7ff63fc6de0d+318bcd]
+	chromedriver!GetHandleVerifier [0x7ff63fc68588+313348]
+	chromedriver!GetHandleVerifier [0x7ff63fc89d7a+334b3a]
+	chromedriver!GetHandleVerifier [0x7ff63f986785+31545]
+	chromedriver!GetHandleVerifier [0x7ff63f98facc+3a88c]
+	chromedriver!GetHandleVerifier [0x7ff63f973634+1e3f4]
+	chromedriver!GetHandleVerifier [0x7ff63f9737e6+1e5a6]
+	chromedriver!GetHandleVerifier [0x7ff63f957e37+2bf7]
+	KERNEL32!BaseThreadInitThunk [0x7ffaf9b7e8d7+17]
+	ntdll!RtlUserThreadStart [0x7ffafafcc48c+2c]
+",2026-04-09 03:10:11.442583

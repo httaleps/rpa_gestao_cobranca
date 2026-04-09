@@ -1,6 +1,8 @@
+import os
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from flask import send_from_directory
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///techsolutions.db'
@@ -67,6 +69,40 @@ def listar_faturas():
             'status': f.status
         })
     return jsonify(resultado)
+
+@app.route('/boletos/<filename>')
+def servir_boleto(filename):
+    pasta = os.path.join(os.path.dirname(__file__), '..', 'boletos')
+    return send_from_directory(os.path.abspath(pasta), filename)
+
+@app.route('/clientes/<int:id>', methods=['DELETE'])
+def deletar_cliente(id):
+    cliente = Cliente.query.get(id)
+    if not cliente:
+        return jsonify({'erro': 'Cliente não encontrado'}), 404
+    db.session.delete(cliente)
+    db.session.commit()
+    return jsonify({'mensagem': f'Cliente {cliente.nome} deletado com sucesso!'})
+
+@app.route('/clientes', methods=['GET'])
+def listar_clientes():
+    clientes = Cliente.query.all()
+    return jsonify([{
+        'id': c.id,
+        'nome': c.nome,
+        'email': c.email,
+        'telefone': c.telefone,
+        'endereco': c.endereco
+    } for c in clientes])
+
+@app.route('/faturas/<int:id>', methods=['DELETE'])
+def deletar_fatura(id):
+    fatura = Fatura.query.get(id)
+    if not fatura:
+        return jsonify({'erro': 'Fatura não encontrada'}), 404
+    db.session.delete(fatura)
+    db.session.commit()
+    return jsonify({'mensagem': f'Fatura ID {fatura.id} deletada com sucesso!'})
 
 if __name__ == '__main__':
     with app.app_context():

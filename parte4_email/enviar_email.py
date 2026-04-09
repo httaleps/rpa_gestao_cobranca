@@ -1,4 +1,5 @@
 import smtplib
+import sqlite3
 import pandas as pd
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -9,8 +10,22 @@ import os
 from segredos import EMAIL_REMETENTE, SENHA_APP
 
 # ── 1. LER PLANILHA ──────────────────────────────────────────────────────────
-df = pd.read_excel('../dados/clientes.xlsx')
+conn = sqlite3.connect('../parte1_cadastro/instance/techsolutions.db')
+df = pd.read_sql_query('''
+    SELECT
+        c.nome        AS Nome,
+        c.email       AS Email,
+        f.valor       AS Valor,
+        f.data_vencimento AS Vencimento,
+        f.id          AS fatura_id
+    FROM fatura f
+    JOIN cliente c ON f.cliente_id = c.id
+''', conn)
+conn.close()
+
 logs = []
+
+print(f"✅ {len(df)} faturas carregadas do banco.")
 
 # ── 2. CONECTAR AO SERVIDOR SMTP ─────────────────────────────────────────────
 try:
@@ -23,11 +38,11 @@ except Exception as e:
 
 # ── 3. ENVIAR E-MAIL PARA CADA CLIENTE ───────────────────────────────────────
 for index, row in df.iterrows():
-    nome       = row['nome']
-    email      = row['email']
-    valor      = row.get('valor', 0)
-    vencimento = row.get('vencimento', 'N/A')
-    pdf_path   = f'../boletos/boleto_cliente{index+1:03d}.pdf'
+    nome       = row['Nome']
+    email      = row['Email']
+    valor      = row.get('Valor', 0)
+    vencimento = row.get('Vencimento', 'N/A')
+    pdf_path = f'../boletos/boleto_cliente{int(row["fatura_id"]):03d}.pdf'
 
     try:
         # Monta o e-mail

@@ -46,24 +46,121 @@
         <button type="submit">Emitir Fatura</button>
     </form>
 
-    <script>
-        // Envia cadastro de cliente
-        document.getElementById('formCliente').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const dados = new FormData(e.target);
-            const resp = await fetch('/clientes', { method: 'POST', body: dados });
-            const json = await resp.json();
-            alert(json.mensagem + ' — ID: ' + json.id);
-        });
+    <h2>Clientes Cadastrados</h2>
+    <button onclick="carregarClientes()">Atualizar Lista</button>
+    <table border="1" style="width:100%; margin-top:10px; border-collapse:collapse;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Telefone</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody id="corpoClientes"></tbody>
+    </table>
 
-        // Envia emissão de fatura
-        document.getElementById('formFatura').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const dados = new FormData(e.target);
-            const resp = await fetch('/faturas', { method: 'POST', body: dados });
-            const json = await resp.json();
-            alert(json.mensagem + ' — ID: ' + json.id);
+    <!-- Listagem de Faturas -->
+    <h2>Faturas Cadastradas</h2>
+    <button onclick="carregarFaturas()">Atualizar Lista</button>
+    <table border="1" style="width:100%; margin-top:10px; border-collapse:collapse;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Valor</th>
+                <th>Vencimento</th>
+                <th>Status</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody id="corpoFaturas"></tbody>
+    </table>
+
+    <script>
+    document.getElementById('formCliente').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const dados = new FormData(e.target);
+        const resp = await fetch('/clientes', { method: 'POST', body: dados });
+        const json = await resp.json();
+        alert(json.mensagem + ' — ID: ' + json.id);
+        carregarClientes();
+    });
+
+    document.getElementById('formFatura').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const dados = new FormData(e.target);
+        const resp = await fetch('/faturas', { method: 'POST', body: dados });
+        const json = await resp.json();
+        alert(json.mensagem + ' — ID: ' + json.id);
+        carregarFaturas();
+    });
+
+    async function carregarClientes() {
+        const resp = await fetch('/clientes');
+        const clientes = await resp.json();
+        const corpo = document.getElementById('corpoClientes');
+        corpo.innerHTML = '';
+        clientes.forEach(c => {
+            corpo.innerHTML += `
+                <tr>
+                    <td>${c.id}</td>
+                    <td>${c.nome}</td>
+                    <td>${c.email}</td>
+                    <td>${c.telefone}</td>
+                    <td>
+                        <button onclick="deletarCliente(${c.id})"
+                            style="background:#cc0000; color:white; border:none; padding:4px 10px; cursor:pointer;">
+                            Deletar
+                        </button>
+                    </td>
+                </tr>`;
         });
+    }
+
+    async function deletarCliente(id) {
+        if (!confirm('Tem certeza que deseja deletar este cliente?')) return;
+        const resp = await fetch(`/clientes/${id}`, { method: 'DELETE' });
+        const json = await resp.json();
+        alert(json.mensagem || json.erro);
+        carregarClientes();
+    }
+
+    async function carregarFaturas() {
+        const resp = await fetch('/faturas');
+        const faturas = await resp.json();
+        const corpo = document.getElementById('corpoFaturas');
+        corpo.innerHTML = '';
+        faturas.forEach(f => {
+            corpo.innerHTML += `
+                <tr>
+                    <td>${f.id}</td>
+                    <td>${f.cliente}</td>
+                    <td>R$ ${f.valor.toFixed(2)}</td>
+                    <td>${f.vencimento}</td>
+                    <td>${f.status}</td>
+                    <td>
+                        <button onclick="deletarFatura(${f.id})"
+                            style="background:#cc0000; color:white; border:none; padding:4px 10px; cursor:pointer;">
+                            Deletar
+                        </button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    async function deletarFatura(id) {
+        if (!confirm('Tem certeza que deseja deletar esta fatura?')) return;
+        const resp = await fetch(`/faturas/${id}`, { method: 'DELETE' });
+        const json = await resp.json();
+        alert(json.mensagem || json.erro);
+        carregarFaturas();        // ← fecha a função corretamente
+    }
+
+    // Carrega as listas ao abrir a página
+    carregarClientes();
+    carregarFaturas();
     </script>
 </body>
 </html>

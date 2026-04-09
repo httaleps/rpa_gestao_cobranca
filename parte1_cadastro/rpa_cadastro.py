@@ -11,12 +11,12 @@ ws = wb.active
 
 clientes = []
 for row in ws.iter_rows(min_row=2, values_only=True):  # Pula o cabeçalho
-    nome, email, telefone, endereco = row
+    Nome, Email, Telefone, Endereco, *_ = row
     clientes.append({
-        'nome': nome,
-        'email': email,
-        'telefone': telefone,
-        'endereco': endereco
+        'nome': Nome,
+        'email': Email,
+        'telefone': Telefone,
+        'endereco': Endereco
     })
 
 print(f"✅ {len(clientes)} clientes carregados do Excel.")
@@ -34,8 +34,14 @@ for cliente in clientes:
         # Preenche cada campo
         wait.until(EC.presence_of_element_located((By.ID, 'nome'))).clear()
         driver.find_element(By.ID, 'nome').send_keys(cliente['nome'])
+
+        driver.find_element(By.ID, 'email').clear()  # ← adicione
         driver.find_element(By.ID, 'email').send_keys(cliente['email'])
-        driver.find_element(By.ID, 'telefone').send_keys(str(cliente['telefone']))
+
+        driver.find_element(By.ID, 'telefone').clear()  # ← adicione
+        driver.find_element(By.ID, 'telefone').send_keys(str(int(cliente['telefone'])))  # ← int() evita ".0"
+
+        driver.find_element(By.ID, 'endereco').clear()  # ← adicione
         driver.find_element(By.ID, 'endereco').send_keys(cliente['endereco'] or '')
 
         # Clica em cadastrar
